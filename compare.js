@@ -299,6 +299,14 @@ var ipsa_helper = {
 			return(similarity)
 
 		},
+                "spectral_angle": function(spectrum_1, spectrum_2){
+                        necessary_dot = aligned_spectrum.map(f2 ).reduce(reducer,{"sum_1_m_1" : 0, "sum_2_m_2": 0, "sum_1_m_2" : 0}
+                        )
+                        similarity = necessary_dot["sum_1_m_2"] / Math.sqrt(necessary_dot["sum_1_m_1"] * necessary_dot["sum_2_m_2"] )
+
+                        return(1-(2*Math.acos(similarity))/3.14159265359)
+
+                },
 		"euclidean_distance": function(spectrum_1, spectrum_2){
 			var rangesum = 0 
   			var sum = 0
@@ -310,6 +318,16 @@ var ipsa_helper = {
  			 }
   			return(1-Math.sqrt(sum/rangesum))
 		},
+                "bray_curtis_distance": function(spectrum_1, spectrum_2){
+                        var difference = 0
+                        var sum = 0
+                        var n
+                        for (n = 0; n < spectrum_1.length; n++) {
+			  difference += Math.abs(spectrum_1[n] - spectrum_2[n])
+                          sum += Math.abs(spectrum_1[n] + spectrum_2[n])
+                         }
+                        return(1-(difference/sum))
+                },
 		"pearson_correlation": function(spectrum_1, spectrum_2){
                         var xsum = 0
 			var xavg = spectrum_1.reduce((a,b) => a + b, 0) / spectrum_1.length
@@ -336,9 +354,13 @@ console.log(c["intensity_1"].length)
 console.log(c["intensity_1"].length)
 d = ipsa_helper["comparison"]["dot_product"](c["intensity_1"], c["intensity_2"])
 e = ipsa_helper["comparison"]["euclidean_distance"](c["intensity_1"], c["intensity_2"])
-f = ipsa_helper["comparison"]["pearson_correlation"](c["intensity_1"], c["intensity_2"])
+f = ipsa_helper["comparison"]["bray_curtis_distance"](c["intensity_1"], c["intensity_2"])
+g = ipsa_helper["comparison"]["pearson_correlation"](c["intensity_1"], c["intensity_2"])
+h = ipsa_helper["comparison"]["spectral_angle"](c["intensity_1"], c["intensity_2"])
 console.log(d)
 console.log(e)
 console.log(f)
+console.log(g)
+console.log(h)
 // console.log(ipsa_helper["binning"](spectrum_1))
 //console.log(ipsa_helper["comparison"]["dot_product"](spectrum_1, spectrum_2))
