@@ -1,7 +1,8 @@
 // https://github.com/OpenMS/OpenMS/blob/5a70018d9e03ce32e64fcbb1c985b7a1256efc7a/src/tests/class_tests/openms/data/PILISSequenceDB_DFPIANGER_1.dta
 spectrum = [{"mz":1019.74, "intensity": 1},
 	{"mz":326.1, "intensity": 122095.0},
-	{"mz":339.9, "intensity": 111771.0},
+//	{"mz":339.9, "intensity": 111771.0},
+	{"mz":326.1, "intensity": 111771.0},
 	{"mz":351.1, "intensity": 60817.0},
 	{"mz":354.1, "intensity": 94638.0},
 	{"mz":358.3, "intensity": 69098.0},
@@ -140,13 +141,15 @@ x = spectrum_2.pop()
 //spectrum_2.push({"mz": 1002, "intensity": 1})
 
 
-f = function(prev, next){
+extract_mz = function(prev, next){
+	// maps [{"mz":v1, "intensity": v2}, ...]
+	// to {"v1" : v2, ....}
 	prev[next["mz"]] = next["intensity"]
 	return(prev)
 }
 
-spectrum_1_simple = spectrum_1.reduce(f, {})
-spectrum_2_simple = spectrum_2.reduce(f, {})
+spectrum_1_simple = spectrum_1.reduce(extract_mz, {})
+spectrum_2_simple = spectrum_2.reduce(extract_mz, {})
 
 //let spectra_zipped = arr1.map((x, i) => [x, arr2[i]]);
 
@@ -170,7 +173,7 @@ denominator_f = function(prev, next){
 
 }
 
-obj =  {"sum_1": 0, "sum_2": 0}
+//obj =  {"sum_1": 0, "sum_2": 0}
 
 f2 = function(obj){
 	obj["1_m_1"] = obj["intensity_1"] * obj["intensity_1"]
@@ -220,9 +223,6 @@ f_rounding = function(digits){
 f_rounding_2 = f_rounding(2)
 f_rounding_3 = f_rounding(3)
 
-CONST = 123.4567890
-console.log(f_rounding_3(CONST))
-console.log(f_rounding_2(CONST))
 
 add_rounding = function(obj){
 	obj["mz_round"] = f_rounding_3(obj["mz"])
@@ -253,7 +253,7 @@ var groupBy = function(data, key) { // `data` is an array of objects, `key` is t
 grouped_spectrum = groupBy(spectrum.map(add_rounding), "mz_round")
 
 test =   [ { "mz": 326.1234, "intensity": 122095, "mz_round": 326.123 },
-	      { "mz": 326.1232, "intensity": 60817, "mz_round": 326.123 } ] 
+	{ "mz": 326.1232, "intensity": 60817, "mz_round": 326.123 } ] 
 
 sum_group = function(prev, next){
 	prev["intensity"] += next["intensity"]
@@ -273,7 +273,35 @@ grouping_f = function(list_o){
 	return(o_peak)
 }
 s = Object.entries(grouped_spectrum).map(grouping_f)
-console.log(s)
 // second element of ever elment is the list of objects. first element just the grouping key
 
 
+var ipsa_helper = {
+	"binning" :
+	f = function(spectrum){
+		grouped_spectrum = groupBy(spectrum.map(add_rounding), "mz_round")
+		s = Object.entries(grouped_spectrum).map(grouping_f)
+		return(s)
+	},
+	"comparison":{
+		"dot_product": function(spectrum_1, spectrum_2){
+			spectrum_1_simple = spectrum_1.reduce(extract_mz, {})
+			spectrum_2_simple = spectrum_2.reduce(extract_mz, {})
+			mz_value1 = spectrum_1.map(x => x["mz"])
+			mz_value2 = spectrum_2.map(x => x["mz"])
+			mz_set = [...new Set(mz_value1.concat(mz_value2))]
+			aligned_spectrum = mz_set.map(z)
+			necessary_dot = aligned_spectrum.map(f2 ).reduce(reducer,{"sum_1_m_1" : 0, "sum_2_m_2": 0, "sum_1_m_2" : 0}
+			)
+			similarity = necessary_dot["sum_1_m_2"] / Math.sqrt(necessary_dot["sum_1_m_1"] * necessary_dot["sum_2_m_2"] )
+
+			return(similarity)
+
+		}
+	}
+
+}
+a = ipsa_helper["binning"](spectrum_1)
+console.log(a.length)
+// console.log(ipsa_helper["binning"](spectrum_1))
+console.log(ipsa_helper["comparison"]["dot_product"](spectrum_1, spectrum_2))
