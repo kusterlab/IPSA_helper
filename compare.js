@@ -1,4 +1,5 @@
 // https://github.com/OpenMS/OpenMS/blob/5a70018d9e03ce32e64fcbb1c985b7a1256efc7a/src/tests/class_tests/openms/data/PILISSequenceDB_DFPIANGER_1.dta
+
 spectrum = [{"mz":1019.74, "intensity": 1},
 	{"mz":326.1, "intensity": 122095.0},
 	//	{"mz":339.9, "intensity": 111771.0},
@@ -130,7 +131,7 @@ spectrum = [{"mz":1019.74, "intensity": 1},
 	{"mz":984.4, "intensity": 501645.0}]
 
 // bin distiance of openMS
-// we expect already binned data (meaning summed intensity for same m/z bin)
+// we expect already binned data (avging summed intensity for same m/z bin)
 spectrum_1 = spectrum
 //spectrum_1 = spectrum_1.filter((x, i) => i < 10)
 //spectrum_2 =spectrum.copy()
@@ -297,6 +298,31 @@ var ipsa_helper = {
 
 			return(similarity)
 
+		},
+		"euclidean_distance": function(spectrum_1, spectrum_2){
+			var rangesum = 0 
+  			var sum = 0
+  			var n
+  			for (n = 0; n < spectrum_1.length; n++) {
+  			  sum += Math.pow(spectrum_1[n] - spectrum_2[n], 2)
+       			  var values = [spectrum_1[n],spectrum_2[n]]
+                          rangesum += Math.pow(Math.max(...values),2)
+ 			 }
+  			return(1-Math.sqrt(sum/rangesum))
+		},
+		"pearson_correlation": function(spectrum_1, spectrum_2){
+                        var xsum = 0
+			var xavg = spectrum_1.reduce((a,b) => a + b, 0) / spectrum_1.length
+			var ysum = 0
+                        var yavg = spectrum_2.reduce((a,b) => a + b, 0) / spectrum_2.length
+                        var sum = 0
+                        var n
+                        for (n = 0; n < spectrum_1.length; n++) {
+			  sum += (spectrum_1[n] - xavg)*(spectrum_2[n] - yavg)
+                          xsum += Math.pow((spectrum_1[n] - xavg),2)
+                          ysum += Math.pow((spectrum_2[n] - yavg),2)
+                         }
+                        return(sum/Math.sqrt(xsum*ysum))
 		}
 	}
 
@@ -309,6 +335,10 @@ c = ipsa_helper["aligning"](a, b)
 console.log(c["intensity_1"].length)
 console.log(c["intensity_1"].length)
 d = ipsa_helper["comparison"]["dot_product"](c["intensity_1"], c["intensity_2"])
+e = ipsa_helper["comparison"]["euclidean_distance"](c["intensity_1"], c["intensity_2"])
+f = ipsa_helper["comparison"]["pearson_correlation"](c["intensity_1"], c["intensity_2"])
 console.log(d)
+console.log(e)
+console.log(f)
 // console.log(ipsa_helper["binning"](spectrum_1))
 //console.log(ipsa_helper["comparison"]["dot_product"](spectrum_1, spectrum_2))
