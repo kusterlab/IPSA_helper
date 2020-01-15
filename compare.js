@@ -1,7 +1,7 @@
 // https://github.com/OpenMS/OpenMS/blob/5a70018d9e03ce32e64fcbb1c985b7a1256efc7a/src/tests/class_tests/openms/data/PILISSequenceDB_DFPIANGER_1.dta
 spectrum = [{"mz":1019.74, "intensity": 1},
 	{"mz":326.1, "intensity": 122095.0},
-//	{"mz":339.9, "intensity": 111771.0},
+	//	{"mz":339.9, "intensity": 111771.0},
 	{"mz":326.1, "intensity": 111771.0},
 	{"mz":351.1, "intensity": 60817.0},
 	{"mz":354.1, "intensity": 94638.0},
@@ -148,32 +148,17 @@ extract_mz = function(prev, next){
 	return(prev)
 }
 
-spectrum_1_simple = spectrum_1.reduce(extract_mz, {})
-spectrum_2_simple = spectrum_2.reduce(extract_mz, {})
 
 //let spectra_zipped = arr1.map((x, i) => [x, arr2[i]]);
 
 
-mz_value1 = spectrum_1.map(x => x["mz"])
-mz_value2 = spectrum_2.map(x => x["mz"])
-mz_set = [...new Set(mz_value1.concat(mz_value2))]
 
 z = function(intensity_bin){
 	return {"intensity_1": intensity_bin in spectrum_1_simple?spectrum_1_simple[intensity_bin]:0,
 		"intensity_2": intensity_bin in spectrum_2_simple?spectrum_2_simple[intensity_bin]:0}
 
 }
-aligned_spectrum = mz_set.map(z)
 
-// sqr root of the product of sums of intensity
-denominator_f = function(prev, next){
-	prev["sum_1"] += next["intensity_1"]
-	prev["sum_2"] += next["intensity_2"]
-	return(prev)
-
-}
-
-//obj =  {"sum_1": 0, "sum_2": 0}
 
 f2 = function(obj){
 	obj["1_m_1"] = obj["intensity_1"] * obj["intensity_1"]
@@ -189,12 +174,6 @@ reducer = function(prev, next){
 	return(prev)
 
 }
-// BE AWARE reduce will do it by pointer if you would provide a template as variable
-// start = {"sum_1_m_1" : 0, "sum_2_m_2": 0, "sum_1_m_2" : 0}
-necessary_dot = aligned_spectrum.map(f2 ).reduce(reducer,{"sum_1_m_1" : 0, "sum_2_m_2": 0, "sum_1_m_2" : 0}
-)
-console.log(necessary_dot["sum_1_m_2"] / Math.sqrt(necessary_dot["sum_1_m_1"] * necessary_dot["sum_2_m_2"] ))
-//console.log(aligned_spectrum.reduce(f2, {}))
 
 
 
@@ -272,25 +251,46 @@ grouping_f = function(list_o){
 	o_peak["mz"] = parseFloat(list_o[0])
 	return(o_peak)
 }
-s = Object.entries(grouped_spectrum).map(grouping_f)
 // second element of ever elment is the list of objects. first element just the grouping key
 
+reduce_aligned_spectrum_to_comparison_in = function(prev, next){
+	prev["intensity_1"].push(next["intensity_1"])
+	prev["intensity_2"].push(next["intensity_2"])
+	return(prev)
+	// in: [{"intensity_1": 1, "intensity_2": 2}, .....]
+}
 
 var ipsa_helper = {
 	"binning" :
 	f = function(spectrum){
+		// summed spectrum by rounding and grouping
+		// returns
+		// [{"mz": v1, "intensity": v2}, ...]
 		grouped_spectrum = groupBy(spectrum.map(add_rounding), "mz_round")
 		s = Object.entries(grouped_spectrum).map(grouping_f)
 		return(s)
 	},
+	"aligning" : function(spectrum_1, spectrum_2){
+		// aligns two spectra by exptracting "mz"
+		// creating unique set of mz ("exact case)
+
+		spectrum_1_simple = spectrum_1.reduce(extract_mz, {})
+		spectrum_2_simple = spectrum_2.reduce(extract_mz, {})
+		mz_value1 = spectrum_1.map(x => x["mz"])
+		mz_value2 = spectrum_2.map(x => x["mz"])
+		mz_set = [...new Set(mz_value1.concat(mz_value2))]
+		aligned_spectrum = mz_set.map(z) // fill with 0
+		aligned_spectrum2 = aligned_spectrum.reduce(reduce_aligned_spectrum_to_comparison_in,{"intensity_1": [], "intensity_2": []})
+		return(aligned_spectrum2)
+		//		necessary_dot = aligned_spectrum.map(f2 ).reduce(reducer,{"sum_1_m_1" : 0, "sum_2_m_2": 0, "sum_1_m_2" : 0}
+
+
+	},
 	"comparison":{
+		// All functions in here must comply to 
+		// spectrum_1_intensity = [....]
+		// spectrum_2_intensity = [....]
 		"dot_product": function(spectrum_1, spectrum_2){
-			spectrum_1_simple = spectrum_1.reduce(extract_mz, {})
-			spectrum_2_simple = spectrum_2.reduce(extract_mz, {})
-			mz_value1 = spectrum_1.map(x => x["mz"])
-			mz_value2 = spectrum_2.map(x => x["mz"])
-			mz_set = [...new Set(mz_value1.concat(mz_value2))]
-			aligned_spectrum = mz_set.map(z)
 			necessary_dot = aligned_spectrum.map(f2 ).reduce(reducer,{"sum_1_m_1" : 0, "sum_2_m_2": 0, "sum_1_m_2" : 0}
 			)
 			similarity = necessary_dot["sum_1_m_2"] / Math.sqrt(necessary_dot["sum_1_m_1"] * necessary_dot["sum_2_m_2"] )
@@ -302,6 +302,13 @@ var ipsa_helper = {
 
 }
 a = ipsa_helper["binning"](spectrum_1)
+b = ipsa_helper["binning"](spectrum_2)
 console.log(a.length)
+console.log(b.length)
+c = ipsa_helper["aligning"](a, b)
+console.log(c["intensity_1"].length)
+console.log(c["intensity_1"].length)
+d = ipsa_helper["comparison"]["dot_product"](c["intensity_1"], c["intensity_2"])
+console.log(d)
 // console.log(ipsa_helper["binning"](spectrum_1))
-console.log(ipsa_helper["comparison"]["dot_product"](spectrum_1, spectrum_2))
+//console.log(ipsa_helper["comparison"]["dot_product"](spectrum_1, spectrum_2))
