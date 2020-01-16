@@ -9,9 +9,11 @@
     "node-fetch": "^2.6.0",
     "node-fetch-polyfill": "^2.0.6"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^7.0.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "",
   "license": "ISC"
