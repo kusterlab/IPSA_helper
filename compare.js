@@ -292,17 +292,29 @@ var ipsa_helper = {
 		// spectrum_1_intensity = [....]
 		// spectrum_2_intensity = [....]
 		"dot_product": function(spectrum_1, spectrum_2){
-			necessary_dot = aligned_spectrum.map(f2 ).reduce(reducer,{"sum_1_m_1" : 0, "sum_2_m_2": 0, "sum_1_m_2" : 0}
-			)
-			similarity = necessary_dot["sum_1_m_2"] / Math.sqrt(necessary_dot["sum_1_m_1"] * necessary_dot["sum_2_m_2"] )
+                        var necessary_dot = 0
+                        var sumx = 0
+                        var sumy = 0
+                        for (n = 0; n < spectrum_1.length; n++) {
+                                necessary_dot += spectrum_1[n]*spectrum_2[n]
+                                sumx += Math.pow(spectrum_1[n],2)
+                                sumy += Math.pow(spectrum_2[n],2)
+                        }
+                        similarity = necessary_dot / Math.sqrt(sumx * sumy)
 
 			return(similarity)
 
 		},
                 "spectral_angle": function(spectrum_1, spectrum_2){
-                        necessary_dot = aligned_spectrum.map(f2 ).reduce(reducer,{"sum_1_m_1" : 0, "sum_2_m_2": 0, "sum_1_m_2" : 0}
-                        )
-                        similarity = necessary_dot["sum_1_m_2"] / Math.sqrt(necessary_dot["sum_1_m_1"] * necessary_dot["sum_2_m_2"] )
+                        var necessary_dot = 0
+                        var sumx = 0
+                        var sumy = 0
+                        for (n = 0; n < spectrum_1.length; n++) {
+                                necessary_dot += spectrum_1[n]*spectrum_2[n]
+                                sumx += Math.pow(spectrum_1[n],2)
+                                sumy += Math.pow(spectrum_2[n],2)
+                        }
+                        similarity = necessary_dot / Math.sqrt(sumx * sumy)
 
                         return(1-(2*Math.acos(similarity))/3.14159265359)
 
