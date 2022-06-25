@@ -6,7 +6,7 @@
   "dependencies": {
     "d3": "^5.15.0",
     "fetch": "^1.1.0",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.7",
     "node-fetch-polyfill": "^2.0.6"
   },
   "devDependencies": {
